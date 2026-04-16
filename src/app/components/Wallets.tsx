@@ -184,17 +184,21 @@ function AddWalletModal({ onClose, onSave }: AddWalletModalProps) {
 
 interface TopUpModalProps {
   wallet: WalletUI;
+  wallets: WalletUI[];
   onClose: () => void;
   onTopUp: (id: number, amount: number) => Promise<void>;
 }
 
-function TopUpModal({ wallet, onClose, onTopUp }: TopUpModalProps) {
+function TopUpModal({ wallet, wallets, onClose, onTopUp }: TopUpModalProps) {
   const [amount, setAmount] = useState("");
+  const [selectedWalletId, setSelectedWalletId] = useState<number>(wallet.id);
   const QUICK = [50000, 100000, 200000, 500000];
+
+  const selectedWallet = wallets.find(w => w.id === selectedWalletId) || wallet;
 
   const handleConfirm = () => {
     if (amount && Number(amount) > 0) {
-      onTopUp(wallet.id, Number(amount));
+      onTopUp(selectedWalletId, Number(amount));
       onClose();
     }
   };
@@ -209,7 +213,7 @@ function TopUpModal({ wallet, onClose, onTopUp }: TopUpModalProps) {
           <div>
             <h2 className="text-[#1F2937]" style={{ fontWeight: 700, fontSize: "1.05rem" }}>Top Up</h2>
             <p className="text-[#9CA3AF]" style={{ fontSize: "0.78rem" }}>
-              {wallet.icon} {wallet.name} · {formatRp(wallet.balance)}
+              {selectedWallet.icon} {selectedWallet.name} · {formatRp(selectedWallet.balance)}
             </p>
           </div>
           <button
@@ -221,6 +225,26 @@ function TopUpModal({ wallet, onClose, onTopUp }: TopUpModalProps) {
         </div>
 
         <div className="px-6 py-5 flex flex-col gap-4">
+          <div>
+            <label className="block text-[#6B7280] mb-1.5" style={{ fontWeight: 500, fontSize: "0.8rem" }}>
+              Select Wallet
+            </label>
+            <div className="flex items-center gap-3 border-2 border-gray-200 focus-within:border-[#22C55E] rounded-xl px-4 py-3 bg-gray-50 transition-colors">
+              <span className="text-xl flex-shrink-0">{selectedWallet.icon}</span>
+              <select
+                value={selectedWalletId}
+                onChange={(e) => setSelectedWalletId(Number(e.target.value))}
+                className="flex-1 bg-transparent outline-none text-[#1F2937] cursor-pointer"
+                style={{ fontWeight: 500, fontSize: "0.9rem" }}
+              >
+                {wallets.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div>
             <label className="block text-[#6B7280] mb-1.5" style={{ fontWeight: 500, fontSize: "0.8rem" }}>
               Amount (Rp)
@@ -476,6 +500,7 @@ export function Wallets() {
       {topUpWallet && (
         <TopUpModal
           wallet={topUpWallet}
+          wallets={wallets}
           onClose={() => setTopUpWallet(null)}
           onTopUp={handleTopUp}
         />
