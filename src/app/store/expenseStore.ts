@@ -15,6 +15,7 @@ export interface Transaction {
   date: string;
   notes: string;
   type: "expense" | "income";
+  walletId?: number;
 }
 
 export interface Wallet {

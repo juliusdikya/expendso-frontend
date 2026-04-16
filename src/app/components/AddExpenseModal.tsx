@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { X, DollarSign, Tag, Calendar, FileText } from "lucide-react";
-import type { Transaction, Category } from "../store/expenseStore";
+import { useState, useEffect } from "react";
+import { X, DollarSign, Tag, Calendar, FileText, Wallet as WalletIcon } from "lucide-react";
+import type { Transaction, Category, Wallet } from "../store/expenseStore";
 import { CATEGORY_META } from "../store/expenseStore";
+import { api } from "../../api/client";
 
 interface Props {
   onClose: () => void;
@@ -19,6 +20,24 @@ export function AddExpenseModal({ onClose, onSave }: Props) {
   const [notes, setNotes] = useState("");
   const [type, setType] = useState<"expense" | "income">("expense");
   const [errors, setErrors] = useState<{ amount?: string }>({});
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [walletId, setWalletId] = useState<number>();
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchWallets = async () => {
+      try {
+        const res = await api("/wallets");
+        setWallets(res);
+        if (res.length > 0) {
+          setWalletId(res[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallets", err);
+      }
+    };
+    fetchWallets();
+  }, []);
 
   const validate = () => {
     const e: { amount?: string } = {};
@@ -29,16 +48,43 @@ export function AddExpenseModal({ onClose, onSave }: Props) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    onSave({
-      id: Math.random().toString(36).slice(2, 9),
-      amount: Number(amount),
-      category,
-      date,
-      notes,
-      type,
-    });
+    if (!walletId) {
+      alert("Please select a wallet first");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      if (type === "expense") {
+        await api("/expenses", "POST", {
+          wallet_id: walletId,
+          amount: Number(amount),
+          category: category.toLowerCase(),
+          note: notes,
+          date: date,
+        });
+      } else {
+        await api(`/wallets/${walletId}/top-up`, "POST", {
+          amount: Number(amount),
+        });
+      }
+
+      onSave({
+        id: Math.random().toString(36).slice(2, 9),
+        amount: Number(amount),
+        category,
+        date,
+        notes,
+        type,
+        walletId,
+      });
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -106,6 +152,33 @@ export function AddExpenseModal({ onClose, onSave }: Props) {
             {errors.amount && (
               <p className="text-red-500 mt-1" style={{ fontSize: "0.75rem" }}>{errors.amount}</p>
             )}
+          </div>
+
+          {/* Wallet */}
+          <div>
+            <label className="block text-[#6B7280] mb-1.5" style={{ fontWeight: 500, fontSize: "0.82rem" }}>
+              Wallet
+            </label>
+            <div className="flex items-center gap-3 border-2 border-gray-200 focus-within:border-[#22C55E] rounded-xl px-4 py-3 bg-gray-50 transition-colors">
+              <WalletIcon size={16} className="text-[#9CA3AF] flex-shrink-0" />
+              <select
+                value={walletId || ""}
+                onChange={(e) => setWalletId(Number(e.target.value))}
+                className="flex-1 bg-transparent outline-none text-[#1F2937] cursor-pointer"
+                style={{ fontWeight: 500, fontSize: "0.9rem" }}
+                disabled={wallets.length === 0}
+              >
+                {wallets.length === 0 ? (
+                  <option value="" disabled>No wallets available</option>
+                ) : (
+                  wallets.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name} (Rp {w.balance.toLocaleString("id-ID")})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
           </div>
 
           {/* Category */}
@@ -177,7 +250,8 @@ export function AddExpenseModal({ onClose, onSave }: Props) {
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-3 rounded-xl bg-[#22C55E] hover:bg-[#16A34A] text-white shadow-md shadow-green-200 transition-all active:scale-95"
+            disabled={isSaving}
+            className="flex-1 py-3 rounded-xl bg-[#22C55E] hover:bg-[#16A34A] text-white shadow-md shadow-green-200 transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
             style={{ fontWeight: 600, fontSize: "0.9rem" }}
           >
             Save
