@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router";
 import {
   LayoutDashboard,
@@ -8,14 +8,16 @@ import {
   X,
   User,
   Leaf,
+  Receipt,
 } from "lucide-react";
 import { AddExpenseModal } from "./AddExpenseModal";
 import type { Transaction } from "../store/expenseStore";
 
 const NAV_ITEMS = [
-  { to: "/",          label: "Dashboard", icon: LayoutDashboard },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/transactions", label: "Transactions", icon: Receipt },
   { to: "/analytics", label: "Analytics", icon: BarChart2 },
-  { to: "/wallets",   label: "Wallets",   icon: Wallet },
+  { to: "/wallets", label: "Wallets", icon: Wallet },
 ];
 
 interface LayoutContextValue {
@@ -24,16 +26,36 @@ interface LayoutContextValue {
 }
 
 import React from "react";
-import { initialTransactions } from "../store/expenseStore";
+import { api } from "../../api/client";
+
 export const LayoutContext = React.createContext<LayoutContextValue>({
   transactions: [],
-  setTransactions: () => {},
+  setTransactions: () => { },
 });
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
-  const [transactions, setTransactions] = useState(initialTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const res = await api("/expenses");
+        const mapped = res.map((t: any) => ({
+          ...t,
+          notes: t.note || "",
+          type: t.type || "expense",
+          category: t.category ? t.category.charAt(0).toUpperCase() + t.category.slice(1) : "Other",
+          walletId: t.wallet_id || t.walletId,
+        }));
+        setTransactions(mapped);
+      } catch (err) {
+        console.error("Failed to load transactions", err);
+      }
+    };
+    fetchTransactions();
+  }, []);
   const location = useLocation();
 
   const pageTitle =
@@ -147,7 +169,7 @@ export function Layout() {
               style={{ fontWeight: 600, fontSize: "0.9rem" }}
             >
               <span className="text-lg leading-none">+</span>
-              Add Expense
+              Add Transactions
             </button>
           </main>
         </div>
