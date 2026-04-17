@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { AddExpenseModal } from "./AddExpenseModal";
 import type { Transaction } from "../store/expenseStore";
+import { useAuth } from "../contexts/AuthContext";
+import { LogOut } from "lucide-react";
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -37,6 +39,7 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -126,15 +129,27 @@ export function Layout() {
 
           {/* User profile */}
           <div className="px-4 pb-6">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#F9FAFB] border border-gray-100">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#F9FAFB] border border-gray-100 mb-2">
               <div className="w-8 h-8 rounded-full bg-[#22C55E]/20 flex items-center justify-center">
                 <User size={16} className="text-[#16A34A]" />
               </div>
-              <div>
-                <p className="text-[#1F2937]" style={{ fontWeight: 600, fontSize: "0.82rem" }}>Alex Johnson</p>
-                <p className="text-[#9CA3AF]" style={{ fontSize: "0.72rem" }}>Personal</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[#1F2937] truncate" style={{ fontWeight: 600, fontSize: "0.82rem" }}>
+                  {user?.name || "User"}
+                </p>
+                <p className="text-[#9CA3AF] truncate" style={{ fontSize: "0.72rem" }}>
+                  {user?.email || "user@example.com"}
+                </p>
               </div>
             </div>
+            <button
+              onClick={logout}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-red-500 transition-colors"
+              style={{ fontWeight: 600, fontSize: "0.82rem" }}
+            >
+              <LogOut size={15} />
+              Sign Out
+            </button>
           </div>
         </aside>
 
