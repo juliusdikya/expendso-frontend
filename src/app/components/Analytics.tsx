@@ -37,11 +37,12 @@ export function Analytics() {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear] = useState(now.getFullYear());
+  const [type, setType] = useState<"expense" | "income">("expense");
 
   const filtered = transactions.filter((t) => {
     const d = new Date(t.date);
     return (
-      t.type === "expense" &&
+      t.type === type &&
       d.getMonth() === selectedMonth &&
       d.getFullYear() === selectedYear
     );
@@ -60,36 +61,58 @@ export function Analytics() {
 
   return (
     <div className="pb-28 flex flex-col gap-5 max-w-3xl mx-auto">
-      {/* Month filter */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
-          <span className="text-[#6B7280]" style={{ fontWeight: 500, fontSize: "0.82rem" }}>
-            Month:
-          </span>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="outline-none bg-transparent text-[#1F2937] pr-6 appearance-none cursor-pointer"
-            style={{ fontWeight: 600, fontSize: "0.88rem" }}
-          >
-            {MONTHS.map((m, i) => (
-              <option key={m} value={i}>{m}</option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="absolute right-3 text-[#9CA3AF] pointer-events-none" />
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+            <span className="text-[#6B7280]" style={{ fontWeight: 500, fontSize: "0.82rem" }}>
+              Month:
+            </span>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="outline-none bg-transparent text-[#1F2937] pr-6 appearance-none cursor-pointer"
+              style={{ fontWeight: 600, fontSize: "0.88rem" }}
+            >
+              {MONTHS.map((m, i) => (
+                <option key={m} value={i}>{m}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-3 text-[#9CA3AF] pointer-events-none" />
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+            <span className="text-[#1F2937]" style={{ fontWeight: 600, fontSize: "0.88rem" }}>{selectedYear}</span>
+          </div>
         </div>
-        <div className="ml-auto bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
-          <span className="text-[#1F2937]" style={{ fontWeight: 600, fontSize: "0.88rem" }}>{selectedYear}</span>
+
+        {/* Type toggle */}
+        <div className="flex gap-2 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
+          {(["expense", "income"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setType(t)}
+              className={`flex-1 sm:px-6 py-1.5 rounded-lg transition-all duration-200 capitalize
+                ${type === t
+                  ? t === "expense"
+                    ? "bg-white text-[#EF4444] shadow-sm"
+                    : "bg-white text-[#22C55E] shadow-sm"
+                  : "text-[#9CA3AF]"
+                }`}
+              style={{ fontWeight: 600, fontSize: "0.85rem" }}
+            >
+              {t}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
-          <div className="w-8 h-8 rounded-xl bg-[#FEE2E2] flex items-center justify-center mb-3">
-            <TrendingDown size={15} className="text-[#EF4444]" />
+          <div className={`w-8 h-8 rounded-xl ${type === "expense" ? "bg-[#FEE2E2]" : "bg-[#DCFCE7]"} flex items-center justify-center mb-3`}>
+            <TrendingDown size={15} className={type === "expense" ? "text-[#EF4444]" : "text-[#22C55E]"} style={{ transform: type === "income" ? "scaleY(-1)" : "none" }} />
           </div>
-          <p className="text-[#6B7280] mb-1" style={{ fontWeight: 500, fontSize: "0.78rem" }}>Total Spending</p>
+          <p className="text-[#6B7280] mb-1" style={{ fontWeight: 500, fontSize: "0.78rem" }}>{type === "expense" ? "Total Spending" : "Total Income"}</p>
           <p className="text-[#1F2937]" style={{ fontWeight: 700, fontSize: "1rem" }}>{formatRp(totalSpending)}</p>
         </div>
         <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
@@ -104,12 +127,12 @@ export function Analytics() {
       {/* Pie chart */}
       <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
         <h2 className="text-[#1F2937] mb-4" style={{ fontWeight: 700, fontSize: "0.95rem" }}>
-          Spending by Category
+          {type === "expense" ? "Spending by Category" : "Income by Category"}
         </h2>
         {chartData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-[#9CA3AF]">
             <span className="text-4xl mb-3">📊</span>
-            <p style={{ fontSize: "0.88rem" }}>No expense data for this month</p>
+            <p style={{ fontSize: "0.88rem" }}>No {type} data for this month</p>
           </div>
         ) : (
           <>
@@ -172,7 +195,7 @@ export function Analytics() {
           </div>
           <div className="flex-1">
             <p className="text-[#6B7280]" style={{ fontWeight: 500, fontSize: "0.78rem" }}>
-              Top Spending Category
+              {type === "expense" ? "Top Spending Category" : "Top Income Category"}
             </p>
             <p className="text-[#1F2937]" style={{ fontWeight: 700, fontSize: "1.05rem" }}>
               {topCategory.name}

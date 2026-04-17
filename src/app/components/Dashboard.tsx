@@ -1,4 +1,5 @@
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
+import { api } from "../../api/client";
 import { TrendingDown, TrendingUp, ArrowRight } from "lucide-react";
 import { LayoutContext } from "./Layout";
 import { CATEGORY_META, MONTHS } from "../store/expenseStore";
@@ -15,6 +16,20 @@ function formatDate(dateStr: string) {
 
 export function Dashboard() {
   const { transactions } = useContext(LayoutContext);
+  const [balance, setBalance] = useState(0);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const res = await api("/wallets");
+        const total = res.reduce((s: number, w: any) => s + w.balance, 0);
+        setBalance(total);
+      } catch (err) {
+        console.error("Failed to load wallets", err);
+      }
+    };
+    fetchBalance();
+  }, [transactions]);
 
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -31,7 +46,6 @@ export function Dashboard() {
   const totalExpenses = transactions
     .filter((t) => t.type === "expense")
     .reduce((s, t) => s + t.amount, 0);
-  const balance = totalIncome - totalExpenses;
 
   const monthlySpending = monthlyTx
     .filter((t) => t.type === "expense")
