@@ -5,7 +5,12 @@ export type Category =
   | "Bills"
   | "Entertainment"
   | "Health"
+  | "Education"
   | "Salary"
+  | "Freelance"
+  | "Bonus"
+  | "Investment"
+  | "Gift"
   | "Other";
 
 export interface Transaction {
@@ -39,7 +44,12 @@ export const CATEGORY_META: Record<
   Bills: { icon: "📄", color: "#EF4444", bg: "#FEF2F2" },
   Entertainment: { icon: "🎬", color: "#EC4899", bg: "#FDF2F8" },
   Health: { icon: "💊", color: "#10B981", bg: "#ECFDF5" },
+  Education: { icon: "📚", color: "#6366F1", bg: "#EEF2FF" },
   Salary: { icon: "💵", color: "#22C55E", bg: "#F0FDF4" },
+  Freelance: { icon: "💻", color: "#14B8A6", bg: "#F0FDFA" },
+  Bonus: { icon: "🎉", color: "#F59E0B", bg: "#FFFBEB" },
+  Investment: { icon: "📈", color: "#8B5CF6", bg: "#F5F3FF" },
+  Gift: { icon: "🎁", color: "#EC4899", bg: "#FDF2F8" },
   Other: { icon: "📦", color: "#6B7280", bg: "#F9FAFB" },
 };
 

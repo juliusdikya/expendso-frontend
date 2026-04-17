@@ -9,8 +9,12 @@ interface Props {
   onSave: (tx: Transaction) => void;
 }
 
-const CATEGORIES: Category[] = [
-  "Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Salary", "Other",
+const EXPENSE_CATEGORIES: Category[] = [
+  "Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other",
+];
+
+const INCOME_CATEGORIES: Category[] = [
+  "Salary", "Freelance", "Bonus", "Investment", "Gift", "Other",
 ];
 
 export function AddExpenseModal({ onClose, onSave }: Props) {
@@ -57,19 +61,14 @@ export function AddExpenseModal({ onClose, onSave }: Props) {
 
     setIsSaving(true);
     try {
-      if (type === "expense") {
-        await api("/expenses", "POST", {
-          wallet_id: walletId,
-          amount: Number(amount),
-          category: category.toLowerCase(),
-          note: notes,
-          date: date,
-        });
-      } else {
-        await api(`/wallets/${walletId}/top-up`, "POST", {
-          amount: Number(amount),
-        });
-      }
+      await api("/expenses", "POST", {
+        wallet_id: walletId,
+        amount: Number(amount),
+        category: category.toLowerCase(),
+        type: type,
+        note: notes,
+        date: date,
+      });
 
       onSave({
         id: Math.random().toString(36).slice(2, 9),
@@ -117,7 +116,10 @@ export function AddExpenseModal({ onClose, onSave }: Props) {
             {(["expense", "income"] as const).map((t) => (
               <button
                 key={t}
-                onClick={() => setType(t)}
+                onClick={() => {
+                  setType(t);
+                  setCategory(t === "expense" ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]);
+                }}
                 className={`flex-1 py-2 rounded-lg transition-all duration-200 capitalize
                   ${type === t
                     ? t === "expense"
@@ -194,7 +196,7 @@ export function AddExpenseModal({ onClose, onSave }: Props) {
                 className="flex-1 bg-transparent outline-none text-[#1F2937] cursor-pointer"
                 style={{ fontWeight: 500, fontSize: "0.9rem" }}
               >
-                {CATEGORIES.map((c) => (
+                { (type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map((c) => (
                   <option key={c} value={c}>
                     {CATEGORY_META[c].icon} {c}
                   </option>
